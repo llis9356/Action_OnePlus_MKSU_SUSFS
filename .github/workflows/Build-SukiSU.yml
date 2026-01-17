@@ -214,6 +214,9 @@ jobs:
           patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
           # 强力修复 show_pad 错误 (使用安全返回)
           sed -i 's/goto show_pad;/return 0;/g' fs/proc/task_mmu.c || true
+          
+          # 修复 signal.h 数组越界错误 (忽略无用代码的警告)
+          sed -i '1i #pragma clang diagnostic ignored "-Warray-bounds"' include/linux/signal.h || true
           echo "完成"
 
       - name: Apply Hide Stuff Patches
