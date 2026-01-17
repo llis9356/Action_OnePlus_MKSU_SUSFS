@@ -214,9 +214,6 @@ jobs:
           patch -p1 < 50_add_susfs_in_gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}.patch || true
           # 强力修复 show_pad 错误 (使用安全返回)
           sed -i 's/goto show_pad;/return 0;/g' fs/proc/task_mmu.c || true
-          
-          # 修复 signal.h 数组越界错误 (忽略无用代码的警告)
-          sed -i '1i #pragma clang diagnostic ignored "-Warray-bounds"' include/linux/signal.h || true
           echo "完成"
 
       - name: Apply Hide Stuff Patches
@@ -323,12 +320,14 @@ jobs:
         if: ${{ github.event.inputs.CPU == 'sm8650' || github.event.inputs.CPU == 'sm7675' }}
         run: |
           cd kernel_workspace
+          export KBUILD_CFLAGS="$KBUILD_CFLAGS -Wno-array-bounds"
           ./kernel_platform/build_with_bazel.py -t ${{ github.event.inputs.CPUD }} ${{ github.event.inputs.BUILD_METHOD }}
           
       - name: Fallback build kernel
         if: ${{ github.event.inputs.CPU != 'sm8650' && github.event.inputs.CPU != 'sm7675' }}
         run: |
          cd kernel_workspace
+         export KBUILD_CFLAGS="$KBUILD_CFLAGS -Wno-array-bounds"
          LTO=thin SYSTEM_DLKM_RE_SIGN=0 BUILD_SYSTEM_DLKM=0 KMI_SYMBOL_LIST_STRICT_MODE=0 ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} ${{ github.event.inputs.BUILD_METHOD }}
 
       - name: Make AnyKernel3
