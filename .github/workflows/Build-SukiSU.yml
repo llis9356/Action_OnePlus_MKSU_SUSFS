@@ -320,14 +320,15 @@ jobs:
         if: ${{ github.event.inputs.CPU == 'sm8650' || github.event.inputs.CPU == 'sm7675' }}
         run: |
           cd kernel_workspace
-          export KBUILD_CFLAGS="$KBUILD_CFLAGS -Wno-array-bounds"
+          # 强力修复 signal.h 报错 (直接修改 Makefile，这是最稳的)
+          echo "KBUILD_CFLAGS += -Wno-array-bounds" >> ./kernel_platform/common/Makefile
           ./kernel_platform/build_with_bazel.py -t ${{ github.event.inputs.CPUD }} ${{ github.event.inputs.BUILD_METHOD }}
           
       - name: Fallback build kernel
         if: ${{ github.event.inputs.CPU != 'sm8650' && github.event.inputs.CPU != 'sm7675' }}
         run: |
          cd kernel_workspace
-         export KBUILD_CFLAGS="$KBUILD_CFLAGS -Wno-array-bounds"
+         echo "KBUILD_CFLAGS += -Wno-array-bounds" >> ./kernel_platform/common/Makefile
          LTO=thin SYSTEM_DLKM_RE_SIGN=0 BUILD_SYSTEM_DLKM=0 KMI_SYMBOL_LIST_STRICT_MODE=0 ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} ${{ github.event.inputs.BUILD_METHOD }}
 
       - name: Make AnyKernel3
